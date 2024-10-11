@@ -1,2 +1,2 @@
-# parkinson-IA
-This is a Parkinson project developed using IA.
+# Parkinson AI
+This is a Parkinson project developed using AI.
