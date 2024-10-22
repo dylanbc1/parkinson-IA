@@ -1,0 +1,7 @@
+venv
+/venv
+__pycache__
+*.pyc
+/dataset_raw
+/dataset_clean
+dataset_raw
