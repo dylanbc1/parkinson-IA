@@ -1,170 +1,170 @@
 {
-  "sujeto_00_sentarse_20241021_211343.mp4": {
-    "processed_date": "2024-10-21T21:44:34.354279",
-    "status": "processed"
-  },
-  "sujeto_00_sentarse_20241021_211226.mp4": {
-    "processed_date": "2024-10-21T21:44:36.422274",
-    "status": "processed"
-  },
-  "sujeto_01_sentarse_20241021_211410.mp4": {
-    "processed_date": "2024-10-21T21:44:38.234239",
-    "status": "processed"
-  },
-  "sujeto_01_sentarse_20241021_211439.mp4": {
-    "processed_date": "2024-10-21T21:44:39.677171",
-    "status": "processed"
-  },
-  "sujeto_00_sentarse_20241021_211253.mp4": {
-    "processed_date": "2024-10-21T21:44:42.312333",
-    "status": "processed"
-  },
-  "sujeto_00_sentarse_20241021_211332.mp4": {
-    "processed_date": "2024-10-21T21:44:44.720203",
-    "status": "processed"
-  },
-  "sujeto_00_sentarse_20241021_211314.mp4": {
-    "processed_date": "2024-10-21T21:44:46.941023",
-    "status": "processed"
-  },
-  "sujeto_01_sentarse_20241021_211447.mp4": {
-    "processed_date": "2024-10-21T21:44:48.686914",
-    "status": "processed"
-  },
-  "sujeto_01_sentarse_20241021_211431.mp4": {
-    "processed_date": "2024-10-21T21:44:50.625125",
-    "status": "processed"
-  },
-  "sujeto_01_sentarse_20241021_211419.mp4": {
-    "processed_date": "2024-10-21T21:44:52.797124",
-    "status": "processed"
-  },
   "sujeto_01_caminar_hacia_20241022_102448.mp4": {
-    "processed_date": "2024-10-22T10:29:12.975191",
+    "processed_date": "2024-10-22T10:57:45.331947",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102303.mp4": {
-    "processed_date": "2024-10-22T10:29:14.274676",
+    "processed_date": "2024-10-22T10:57:46.652961",
+    "status": "processed"
+  },
+  "sujeto_00_sentarse_20241021_211343.mp4": {
+    "processed_date": "2024-10-22T10:57:48.406303",
     "status": "processed"
   },
   "sujeto_00_caminar_regreso_20241022_102811.mp4": {
-    "processed_date": "2024-10-22T10:29:16.251499",
+    "processed_date": "2024-10-22T10:57:50.404672",
+    "status": "processed"
+  },
+  "sujeto_00_sentarse_20241021_211226.mp4": {
+    "processed_date": "2024-10-22T10:57:52.530247",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102539.mp4": {
-    "processed_date": "2024-10-22T10:29:18.599941",
+    "processed_date": "2024-10-22T10:57:54.928604",
+    "status": "processed"
+  },
+  "sujeto_01_sentarse_20241021_211410.mp4": {
+    "processed_date": "2024-10-22T10:57:56.748738",
+    "status": "processed"
+  },
+  "sujeto_01_sentarse_20241021_211439.mp4": {
+    "processed_date": "2024-10-22T10:57:58.175126",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102202.mp4": {
-    "processed_date": "2024-10-22T10:29:20.180671",
+    "processed_date": "2024-10-22T10:57:59.799371",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102649.mp4": {
-    "processed_date": "2024-10-22T10:29:22.413138",
+    "processed_date": "2024-10-22T10:58:02.221031",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102549.mp4": {
-    "processed_date": "2024-10-22T10:29:24.658384",
+    "processed_date": "2024-10-22T10:58:04.520795",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102559.mp4": {
-    "processed_date": "2024-10-22T10:29:27.100129",
+    "processed_date": "2024-10-22T10:58:06.968609",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102211.mp4": {
-    "processed_date": "2024-10-22T10:29:28.844418",
+    "processed_date": "2024-10-22T10:58:08.724352",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102710.mp4": {
-    "processed_date": "2024-10-22T10:29:30.945881",
+    "processed_date": "2024-10-22T10:58:10.837409",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102659.mp4": {
-    "processed_date": "2024-10-22T10:29:33.208820",
+    "processed_date": "2024-10-22T10:58:13.084389",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102238.mp4": {
-    "processed_date": "2024-10-22T10:29:35.011531",
+    "processed_date": "2024-10-22T10:58:14.960849",
+    "status": "processed"
+  },
+  "sujeto_00_sentarse_20241021_211253.mp4": {
+    "processed_date": "2024-10-22T10:58:17.589273",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102413.mp4": {
-    "processed_date": "2024-10-22T10:29:37.559171",
+    "processed_date": "2024-10-22T10:58:20.246026",
+    "status": "processed"
+  },
+  "sujeto_00_sentarse_20241021_211332.mp4": {
+    "processed_date": "2024-10-22T10:58:22.674634",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102154.mp4": {
-    "processed_date": "2024-10-22T10:29:39.133189",
+    "processed_date": "2024-10-22T10:58:24.251408",
+    "status": "processed"
+  },
+  "sujeto_00_sentarse_20241021_211314.mp4": {
+    "processed_date": "2024-10-22T10:58:26.474093",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102640.mp4": {
-    "processed_date": "2024-10-22T10:29:41.533612",
+    "processed_date": "2024-10-22T10:58:28.831766",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102409.mp4": {
-    "processed_date": "2024-10-22T10:29:41.981217",
+    "processed_date": "2024-10-22T10:58:29.276119",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102218.mp4": {
-    "processed_date": "2024-10-22T10:29:43.667511",
+    "processed_date": "2024-10-22T10:58:30.962221",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102356.mp4": {
-    "processed_date": "2024-10-22T10:29:43.720188",
+    "processed_date": "2024-10-22T10:58:31.015493",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102424.mp4": {
-    "processed_date": "2024-10-22T10:29:46.061033",
+    "processed_date": "2024-10-22T10:58:33.355116",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102357.mp4": {
-    "processed_date": "2024-10-22T10:29:47.763977",
+    "processed_date": "2024-10-22T10:58:35.106401",
+    "status": "processed"
+  },
+  "sujeto_01_sentarse_20241021_211447.mp4": {
+    "processed_date": "2024-10-22T10:58:36.830312",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102226.mp4": {
-    "processed_date": "2024-10-22T10:29:49.404339",
+    "processed_date": "2024-10-22T10:58:38.462646",
     "status": "processed"
   },
   "sujeto_00_caminar_regreso_20241022_102759.mp4": {
-    "processed_date": "2024-10-22T10:29:51.399075",
+    "processed_date": "2024-10-22T10:58:40.435214",
     "status": "processed"
   },
   "sujeto_00_caminar_regreso_20241022_102822.mp4": {
-    "processed_date": "2024-10-22T10:29:53.879415",
+    "processed_date": "2024-10-22T10:58:42.950997",
     "status": "processed"
   },
   "sujeto_00_caminar_regreso_20241022_102834.mp4": {
-    "processed_date": "2024-10-22T10:29:56.265323",
+    "processed_date": "2024-10-22T10:58:45.342122",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102457.mp4": {
-    "processed_date": "2024-10-22T10:29:57.746710",
+    "processed_date": "2024-10-22T10:58:46.825465",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102257.mp4": {
-    "processed_date": "2024-10-22T10:29:59.196642",
+    "processed_date": "2024-10-22T10:58:48.256461",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102252.mp4": {
-    "processed_date": "2024-10-22T10:30:00.616287",
+    "processed_date": "2024-10-22T10:58:49.681342",
+    "status": "processed"
+  },
+  "sujeto_01_sentarse_20241021_211431.mp4": {
+    "processed_date": "2024-10-22T10:58:51.633482",
+    "status": "processed"
+  },
+  "sujeto_01_sentarse_20241021_211419.mp4": {
+    "processed_date": "2024-10-22T10:58:53.783799",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102618.mp4": {
-    "processed_date": "2024-10-22T10:30:02.420848",
+    "processed_date": "2024-10-22T10:58:55.594599",
     "status": "processed"
   },
   "sujeto_00_caminar_hacia_20241022_102630.mp4": {
-    "processed_date": "2024-10-22T10:30:04.552786",
+    "processed_date": "2024-10-22T10:58:57.744711",
     "status": "processed"
   },
   "sujeto_00_levantarse_20241022_102245.mp4": {
-    "processed_date": "2024-10-22T10:30:06.254847",
+    "processed_date": "2024-10-22T10:58:59.484077",
     "status": "processed"
   },
   "sujeto_00_caminar_regreso_20241022_102749.mp4": {
-    "processed_date": "2024-10-22T10:30:08.333911",
+    "processed_date": "2024-10-22T10:59:01.553891",
     "status": "processed"
   },
   "sujeto_01_caminar_hacia_20241022_102531.mp4": {
-    "processed_date": "2024-10-22T10:30:10.158851",
+    "processed_date": "2024-10-22T10:59:03.390993",
     "status": "processed"
   }
 }

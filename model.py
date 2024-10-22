@@ -26,6 +26,19 @@ class SmartVideoProcessor:
         self.log_file = self.output_dir / "processing_log.json"
         self.processed_videos = self.load_processing_log()
         
+        # Definir mapeo de actividades
+        self.activity_mapping = {
+            'caminar_hacia': 0,
+            'caminar_regreso': 1,
+            'girar': 2,
+            'sentarse': 3,
+            'levantarse': 4
+        }
+        
+        # Guardar el mapeo de actividades
+        with open(self.output_dir / 'activity_mapping.json', 'w') as f:
+            json.dump(self.activity_mapping, f, indent=2)
+        
         # Articulaciones clave
         self.key_joints = [
             'LEFT_HIP', 'RIGHT_HIP',
@@ -35,6 +48,11 @@ class SmartVideoProcessor:
             'LEFT_SHOULDER', 'RIGHT_SHOULDER',
             'NOSE'
         ]
+        
+        # Imprimir información de configuración
+        print("Actividades configuradas:")
+        for activity, idx in self.activity_mapping.items():
+            print(f"{idx}: {activity}")
 
     def load_processing_log(self):
         """Carga el registro de videos procesados."""
@@ -54,9 +72,7 @@ class SmartVideoProcessor:
 
     def needs_processing(self, video_path):
         """Verifica si un video necesita ser procesado."""
-        # Verificar si el video ya fue procesado
         if video_path.name in self.processed_videos:
-            # Verificar si existe el archivo de salida
             output_path = self.output_dir / f"{video_path.stem}_processed.json"
             if output_path.exists():
                 return False
@@ -72,12 +88,11 @@ class SmartVideoProcessor:
             for joint in self.key_joints:
                 idx = getattr(self.mp_pose.PoseLandmark, joint)
                 landmark = results.pose_landmarks.landmark[idx]
-                landmarks_dict[joint] = {
-                    'x': landmark.x,
-                    'y': landmark.y,
-                    'z': landmark.z,
-                    'visibility': landmark.visibility
-                }
+                # Guardar coordenadas en formato para el modelo
+                landmarks_dict[f"{joint}_x"] = landmark.x
+                landmarks_dict[f"{joint}_y"] = landmark.y
+                landmarks_dict[f"{joint}_z"] = landmark.z
+                landmarks_dict[f"{joint}_visibility"] = landmark.visibility
             return landmarks_dict
         return None
 
@@ -87,13 +102,19 @@ class SmartVideoProcessor:
         
         # Ángulo de rodillas
         for side in ['LEFT', 'RIGHT']:
-            hip = landmarks_dict[f'{side}_HIP']
-            knee = landmarks_dict[f'{side}_KNEE']
-            ankle = landmarks_dict[f'{side}_ANKLE']
+            # Extraer coordenadas
+            hip_x = landmarks_dict[f'{side}_HIP_x']
+            hip_y = landmarks_dict[f'{side}_HIP_y']
+            knee_x = landmarks_dict[f'{side}_KNEE_x']
+            knee_y = landmarks_dict[f'{side}_KNEE_y']
+            ankle_x = landmarks_dict[f'{side}_ANKLE_x']
+            ankle_y = landmarks_dict[f'{side}_ANKLE_y']
             
-            v1 = np.array([hip['x'] - knee['x'], hip['y'] - knee['y']])
-            v2 = np.array([ankle['x'] - knee['x'], ankle['y'] - knee['y']])
+            # Calcular vectores
+            v1 = np.array([hip_x - knee_x, hip_y - knee_y])
+            v2 = np.array([ankle_x - knee_x, ankle_y - knee_y])
             
+            # Calcular ángulo
             angle = np.degrees(np.arccos(np.clip(
                 np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), 
                 -1.0, 1.0
@@ -101,12 +122,13 @@ class SmartVideoProcessor:
             angles[f'{side}_KNEE_ANGLE'] = angle
         
         # Inclinación lateral del tronco
-        left_shoulder = np.array([landmarks_dict['LEFT_SHOULDER']['x'],
-                                landmarks_dict['LEFT_SHOULDER']['y']])
-        right_shoulder = np.array([landmarks_dict['RIGHT_SHOULDER']['x'],
-                                 landmarks_dict['RIGHT_SHOULDER']['y']])
+        left_shoulder_x = landmarks_dict['LEFT_SHOULDER_x']
+        left_shoulder_y = landmarks_dict['LEFT_SHOULDER_y']
+        right_shoulder_x = landmarks_dict['RIGHT_SHOULDER_x']
+        right_shoulder_y = landmarks_dict['RIGHT_SHOULDER_y']
         
-        shoulder_vector = right_shoulder - left_shoulder
+        shoulder_vector = np.array([right_shoulder_x - left_shoulder_x,
+                                  right_shoulder_y - left_shoulder_y])
         horizontal = np.array([1, 0])
         
         trunk_angle = np.degrees(np.arccos(np.clip(
@@ -117,19 +139,38 @@ class SmartVideoProcessor:
         
         return angles
 
+    def identify_activity(self, filename):
+        """Identifica la actividad desde el nombre del archivo."""
+        parts = filename.split('_')
+        if len(parts) < 2:
+            return None
+            
+        # Buscar la actividad en el nombre del archivo
+        for activity in self.activity_mapping.keys():
+            if activity in filename:
+                return activity
+                
+        return None
+
     def process_video(self, video_path):
         """Procesa un video y extrae landmarks y ángulos."""
         filename = video_path.stem
-        subject_id, activity, timestamp = filename.split('_', 2)
+        
+        # Identificar actividad
+        activity = self.identify_activity(filename)
+        if not activity:
+            raise ValueError(f"No se pudo identificar la actividad en {filename}")
+        
+        activity_id = self.activity_mapping[activity]
         
         cap = cv2.VideoCapture(str(video_path))
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         video_data = {
             'metadata': {
-                'subject_id': subject_id,
+                'filename': filename,
                 'activity': activity,
-                'timestamp': timestamp,
+                'activity_id': activity_id,
                 'total_frames': frame_count
             },
             'frames': []
@@ -185,6 +226,9 @@ class SmartVideoProcessor:
             except Exception as e:
                 print(f"Error procesando {video_path.name}: {str(e)}")
                 self.update_processing_log(video_path, status="error")
+
+        print("\nProcesamiento completado.")
+        print("Por favor, verifique que las actividades se hayan identificado correctamente en los archivos JSON generados.")
 
 if __name__ == "__main__":
     processor = SmartVideoProcessor()
