@@ -8,6 +8,7 @@ from pathlib import Path
 from tkinter import Tk, Frame, Button, ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import MinMaxScaler
 
 dataset_dir = Path("dataset_processed")
 
@@ -26,10 +27,9 @@ def calculate_angle(p1, p2, p3):
     return angle
 
 def extract_angles_from_json(json_file):
-    """Extract joint angles and activity from the processed JSON file."""
+    """Extract joint angles, lateral inclination, and activity from the processed JSON file."""
     with open(json_file, 'r') as f:
         json_data = json.load(f)
-
 
     if 'frames' not in json_data:
         print(f"Key 'frames' not found in {json_file.name}. JSON data: {json_data}")
@@ -42,29 +42,30 @@ def extract_angles_from_json(json_file):
     for frame in frames:
         landmarks = frame['landmarks']
 
-
         left_knee_angle = calculate_angle(landmarks.get('LEFT_HIP', {}), landmarks.get('LEFT_KNEE', {}), landmarks.get('LEFT_ANKLE', {})) if all(key in landmarks for key in ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE']) else None
         right_knee_angle = calculate_angle(landmarks.get('RIGHT_HIP', {}), landmarks.get('RIGHT_KNEE', {}), landmarks.get('RIGHT_ANKLE', {})) if all(key in landmarks for key in ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE']) else None
 
-
-        left_wrist = landmarks.get('LEFT_WRIST', {}).get('x')
-        right_wrist = landmarks.get('RIGHT_WRIST', {}).get('x')
         left_shoulder = landmarks.get('LEFT_SHOULDER', {}).get('x')
         right_shoulder = landmarks.get('RIGHT_SHOULDER', {}).get('x')
-        nose = landmarks.get('NOSE', {}).get('x')
+        left_hip = landmarks.get('LEFT_HIP', {}).get('x')
+        right_hip = landmarks.get('RIGHT_HIP', {}).get('x')
+
+        lateral_inclination = calculate_lateral_inclination(left_shoulder, right_shoulder, left_hip, right_hip)
 
         angles = {
             'LEFT_KNEE_ANGLE': left_knee_angle,
             'RIGHT_KNEE_ANGLE': right_knee_angle,
-            'LEFT_WRIST': left_wrist,
-            'RIGHT_WRIST': right_wrist,
+            'LEFT_WRIST': landmarks.get('LEFT_WRIST', {}).get('x'),
+            'RIGHT_WRIST': landmarks.get('RIGHT_WRIST', {}).get('x'),
             'LEFT_SHOULDER': left_shoulder,
             'RIGHT_SHOULDER': right_shoulder,
-            'NOSE': nose,
+            'NOSE': landmarks.get('NOSE', {}).get('x'),
+            'LATERAL_INCLINATION': lateral_inclination,
             'activity': activity
         }
 
         data.append(angles)
+
 
 def calculate_velocity(p1, p2, delta_t):
     """Calculate velocity between two points given the time difference."""
@@ -107,23 +108,15 @@ def extract_motion_features(json_file):
             'activity': json_data['metadata'].get('activity', 'unknown')
         })
 
-# def detect_outliers(df, feature):
-#     """Detect and mark outliers in a specific feature using the IQR method."""
-#     Q1 = df[feature].quantile(0.25)
-#     Q3 = df[feature].quantile(0.75)
-#     IQR = Q3 - Q1
-#     lower_bound = Q1 - 1.5 * IQR
-#     upper_bound = Q3 + 1.5 * IQR
-#     df['OUTLIER_' + feature] = (df[feature] < lower_bound) | (df[feature] > upper_bound)
-
-# def detect_anomalies(df):
-#     """Apply Isolation Forest to detect anomalies in wrist velocities."""
-#     motion_features = df[['LEFT_WRIST_VELOCITY', 'RIGHT_WRIST_VELOCITY']].dropna()
-#     df['ANOMALY'] = iso_forest.fit_predict(motion_features)
+def calculate_lateral_inclination(left_shoulder, right_shoulder, left_hip, right_hip):
+    """Calculate lateral inclination based on shoulder and hip positions."""
+    if None in [left_shoulder, right_shoulder, left_hip, right_hip]:
+        return None
+    shoulder_mid = (left_shoulder + right_shoulder) / 2
+    hip_mid = (left_hip + right_hip) / 2
+    return shoulder_mid - hip_mid
 
 
-#     iso_forest = IsolationForest(contamination=0.05)
-#     df['ANOMALY'] = iso_forest.fit_predict(motion_features)
 
 data = []
 invalid_json_files = []
@@ -145,11 +138,7 @@ else:
 df = pd.DataFrame(data)
 
 
-# for feature in ['LEFT_KNEE_ANGLE', 'RIGHT_KNEE_ANGLE', 'LEFT_WRIST', 'RIGHT_WRIST']:
-#     detect_outliers(df, feature)
 
-
-# detect_anomalies(df)
 
 
 def plot_set_1(fig, df):
@@ -193,27 +182,22 @@ def plot_set_4(fig, df):
     axs[1].set_title('Distribution of Right Wrist Velocity')
     fig.tight_layout()
 
-# def plot_set_5(fig, df):
-#     """Create fifth set of plots for outliers."""
-#     axs = fig.subplots(1, 2)
+def plot_set_5(fig, df):
+    """Create fifth set of plots for lateral inclination and shoulder positions."""
+    axs = fig.subplots(1, 3)
 
-#     sns.scatterplot(x='LEFT_KNEE_ANGLE', y='LEFT_WRIST', hue='OUTLIER_LEFT_KNEE_ANGLE', data=df, ax=axs[0])
-#     axs[0].set_title('Outliers in Left Knee Angle')
+    sns.histplot(df['LATERAL_INCLINATION'], kde=True, ax=axs[0])
+    axs[0].set_title('Distribution of Lateral Inclination')
 
-#     sns.scatterplot(x='RIGHT_KNEE_ANGLE', y='RIGHT_WRIST', hue='OUTLIER_RIGHT_KNEE_ANGLE', data=df, ax=axs[1])
-#     axs[1].set_title('Outliers in Right Knee Angle')
-#     fig.tight_layout()
+    sns.histplot(df['LEFT_SHOULDER'], kde=True, ax=axs[1])
+    axs[1].set_title('Distribution of Left Shoulder Position')
 
-# def plot_set_6(fig, df):
-#     """Create sixth set of plots for anomaly detection."""
-#     axs = fig.subplots(1, 2)
+    sns.histplot(df['RIGHT_SHOULDER'], kde=True, ax=axs[2])
+    axs[2].set_title('Distribution of Right Shoulder Position')
 
-#     sns.scatterplot(x='LEFT_WRIST_VELOCITY', y='RIGHT_WRIST_VELOCITY', hue='ANOMALY', palette='coolwarm', data=df, ax=axs[0])
-#     axs[0].set_title('Anomaly Detection in Wrist Velocities')
+    fig.tight_layout()
 
-#     sns.countplot(x='ANOMALY', data=df, ax=axs[1])
-#     axs[1].set_title('Anomaly Count')
-#     fig.tight_layout()
+
 
 
 def display_plots():
@@ -228,21 +212,19 @@ def display_plots():
     tab3 = Frame(notebook)
     tab4 = Frame(notebook)
     tab5 = Frame(notebook)
-    tab6 = Frame(notebook)
 
     notebook.add(tab1, text="Knee Angles")
     notebook.add(tab2, text="Wrist Angles")
     notebook.add(tab3, text="Correlation & Activity")
     notebook.add(tab4, text="Wrist Velocities")
-    notebook.add(tab5, text="Outliers in Angles")
-    notebook.add(tab6, text="Anomaly Detection")
+    notebook.add(tab5, text="Lateral Inclination & Shoulders")
 
     fig1 = plt.Figure(figsize=(10, 8), dpi=100)
     fig2 = plt.Figure(figsize=(10, 8), dpi=100)
     fig3 = plt.Figure(figsize=(10, 8), dpi=100)
     fig4 = plt.Figure(figsize=(10, 8), dpi=100)
-    # fig5 = plt.Figure(figsize=(10, 8), dpi=100)
-    # fig6 = plt.Figure(figsize=(10, 8), dpi=100)
+    fig5 = plt.Figure(figsize=(10, 8), dpi=100)
+
 
     canvas1 = FigureCanvasTkAgg(fig1, master=tab1)
     canvas1.draw()
@@ -264,15 +246,11 @@ def display_plots():
     canvas4.get_tk_widget().pack(fill="both", expand=True)
     plot_set_4(fig4, df)
 
-    # canvas5 = FigureCanvasTkAgg(fig5, master=tab5)
-    # canvas5.draw()
-    # canvas5.get_tk_widget().pack(fill="both", expand=True)
-    # plot_set_5(fig5, df)
+    canvas5 = FigureCanvasTkAgg(fig5, master=tab5)
+    canvas5.draw()
+    canvas5.get_tk_widget().pack(fill="both", expand=True)
+    plot_set_5(fig5, df)
 
-    # canvas6 = FigureCanvasTkAgg(fig6, master=tab6)
-    # canvas6.draw()
-    # canvas6.get_tk_widget().pack(fill="both", expand=True)
-    # plot_set_6(fig6, df)
 
     root.mainloop()
 
