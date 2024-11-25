@@ -1,7 +1,0 @@
-{
-  "caminar_hacia": 0,
-  "caminar_regreso": 1,
-  "girar": 2,
-  "sentarse": 3,
-  "levantarse": 4
-}

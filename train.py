@@ -1,208 +1,189 @@
-import pandas as pd
 import numpy as np
-from sklearn.svm import SVC
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-from sklearn.metrics import confusion_matrix, classification_report
-import xgboost as xgb
-from pathlib import Path
-import json
+from sklearn.svm import SVC
+from xgboost import XGBClassifier
 import joblib
-from sklearn.model_selection import GridSearchCV
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime
+import time
+import logging
+from pathlib import Path
 
-class PostureModelTrainer:
-    def __init__(self, data_dir="dataset_final", output_dir="models"):
-        self.data_dir = Path(data_dir)
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ActionClassifierTrainer:
+    def __init__(self, data_path, models_dir="modelos_entrenados"):
+        """
+        Inicializa el entrenador de clasificadores.
         
-        # Cargar datos
-        self.load_data()
+        Args:
+            data_path: Ruta a los datos procesados
+            models_dir: Directorio donde guardar los modelos
+        """
+        self.data_path = data_path
+        self.models_dir = Path(models_dir)
+        self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.best_model = None
+        self.best_model_name = None
+        self.best_score = 0
         
-        # Definir modelos y sus hiperparámetros
-        self.models = {
-            'svm': {
-                'model': SVC(random_state=42),
-                'params': {
-                    'C': [0.1, 1, 10],
-                    'kernel': ['rbf', 'linear'],
-                    'gamma': ['scale', 'auto']
-                }
-            },
+    def load_data(self):
+        """Carga los datos procesados."""
+        logger.info("Cargando datos procesados...")
+        data = np.load(self.data_path, allow_pickle=True)
+        X = data['X']
+        y = data['y']
+        
+        # Asegurarse de que X e y tengan el mismo número de muestras
+        min_samples = min(len(X), len(y))
+        self.X = X[:min_samples]
+        self.y = y[:min_samples]
+        
+        self.classes = data['classes']
+        
+        logger.info(f"Dimensiones de X: {self.X.shape}")
+        logger.info(f"Dimensiones de y: {self.y.shape}")
+        logger.info(f"Clases únicas: {np.unique(self.y)}")
+        
+        # Validar que tenemos el mismo número de muestras
+        assert len(self.X) == len(self.y), "Las dimensiones de X e y no coinciden"
+        
+        # Split de datos
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            self.X, self.y, test_size=0.2, random_state=42, stratify=self.y
+        )
+        
+        logger.info(f"Datos de entrenamiento - X: {self.X_train.shape}, y: {self.y_train.shape}")
+        logger.info(f"Datos de prueba - X: {self.X_test.shape}, y: {self.y_test.shape}")
+        
+    def train_models(self):
+        """Entrena y evalúa múltiples modelos."""
+        models = {
             'random_forest': {
                 'model': RandomForestClassifier(random_state=42),
                 'params': {
-                    'n_estimators': [100, 200, 300],
+                    'n_estimators': [100, 200],
                     'max_depth': [10, 20, None],
-                    'min_samples_split': [2, 5, 10]
+                    'min_samples_split': [2, 5]
                 }
             },
             'xgboost': {
-                'model': xgb.XGBClassifier(random_state=42),
+                'model': XGBClassifier(random_state=42),
                 'params': {
-                    'n_estimators': [100, 200, 300],
-                    'max_depth': [3, 6, 9],
-                    'learning_rate': [0.01, 0.1, 0.3]
+                    'n_estimators': [100, 200],
+                    'max_depth': [3, 5, 7],
+                    'learning_rate': [0.01, 0.1]
                 }
             }
         }
         
-        self.best_models = {}
-    
-    def load_data(self):
-        """Carga los datos de entrenamiento y prueba."""
-        print("Cargando datos...")
+        for name, config in models.items():
+            logger.info(f"\nEntrenando {name}...")
+            try:
+                self._train_and_evaluate_model(name, config['model'], config['params'])
+            except Exception as e:
+                logger.error(f"Error entrenando {name}: {str(e)}")
         
-        self.train_data = pd.read_csv(self.data_dir / 'train_data.csv')
-        self.test_data = pd.read_csv(self.data_dir / 'test_data.csv')
+        if self.best_model is not None:
+            logger.info(f"\nMejor modelo: {self.best_model_name} con score: {self.best_score:.4f}")
+        else:
+            logger.warning("No se pudo entrenar ningún modelo correctamente")
         
-        # Separar características y etiquetas
-        self.X_train = self.train_data.drop('activity_encoded', axis=1)
-        self.y_train = self.train_data['activity_encoded']
-        self.X_test = self.test_data.drop('activity_encoded', axis=1)
-        self.y_test = self.test_data['activity_encoded']
+    def _train_and_evaluate_model(self, name, model, param_grid):
+        """Entrena y evalúa un modelo específico."""
+        # Grid Search con validación cruzada
+        grid_search = GridSearchCV(
+            model, param_grid, cv=5, scoring='f1_weighted', n_jobs=-1, verbose=1
+        )
         
-        # Cargar mapeo de actividades
-        with open(self.data_dir / 'activity_mapping.json', 'r') as f:
-            self.activity_mapping = json.load(f)
+        # Medir tiempo de entrenamiento
+        start_time = time.time()
+        grid_search.fit(self.X_train, self.y_train)
+        train_time = time.time() - start_time
         
-        print(f"Datos cargados - Características de entrenamiento: {self.X_train.shape}")
-    
-    def train_and_evaluate(self):
-        """Entrena y evalúa todos los modelos."""
-        results = {}
+        # Evaluar modelo
+        y_pred = grid_search.predict(self.X_test)
         
-        for model_name, model_info in self.models.items():
-            print(f"\nEntrenando {model_name}...")
-            
-            # Búsqueda de hiperparámetros con validación cruzada
-            grid_search = GridSearchCV(
-                model_info['model'],
-                model_info['params'],
-                cv=5,
-                scoring='f1_weighted',
-                n_jobs=-1
-            )
-            
-            grid_search.fit(self.X_train, self.y_train)
-            
-            # Guardar el mejor modelo
-            self.best_models[model_name] = grid_search.best_estimator_
-            
-            # Evaluar en conjunto de prueba
-            y_pred = grid_search.predict(self.X_test)
-            
-            # Calcular métricas
-            accuracy = accuracy_score(self.y_test, y_pred)
-            precision, recall, f1, _ = precision_recall_fscore_support(
-                self.y_test, y_pred, average='weighted'
-            )
-            
-            results[model_name] = {
-                'best_params': grid_search.best_params_,
-                'accuracy': accuracy,
-                'precision': precision,
-                'recall': recall,
-                'f1': f1,
-                'confusion_matrix': confusion_matrix(self.y_test, y_pred)
-            }
-            
-            print(f"Mejores parámetros para {model_name}: {grid_search.best_params_}")
-            print(f"F1-Score: {f1:.4f}")
+        # Medir tiempo de inferencia
+        start_time = time.time()
+        for _ in range(100):  # Promedio de 100 predicciones
+            grid_search.predict(self.X_test[:1])
+        inference_time = (time.time() - start_time) / 100
         
-        return results
-    
-    def plot_results(self, results):
-        """Genera visualizaciones de los resultados."""
-        # Comparación de métricas
-        metrics_df = pd.DataFrame({
-            model: {
-                'Accuracy': results[model]['accuracy'],
-                'Precision': results[model]['precision'],
-                'Recall': results[model]['recall'],
-                'F1-Score': results[model]['f1']
-            }
-            for model in results.keys()
-        }).T
-        
-        plt.figure(figsize=(10, 6))
-        metrics_df.plot(kind='bar', ylim=(0, 1))
-        plt.title('Comparación de Métricas por Modelo')
-        plt.xlabel('Modelo')
-        plt.ylabel('Puntuación')
-        plt.tight_layout()
-        plt.savefig(self.output_dir / 'metrics_comparison.png')
-        
-        # Matrices de confusión
-        for model_name, model_results in results.items():
-            plt.figure(figsize=(8, 6))
-            sns.heatmap(
-                model_results['confusion_matrix'],
-                annot=True,
-                fmt='d',
-                cmap='Blues',
-                xticklabels=[v for k, v in self.activity_mapping.items()],
-                yticklabels=[v for k, v in self.activity_mapping.items()]
-            )
-            plt.title(f'Matriz de Confusión - {model_name}')
-            plt.xlabel('Predicción')
-            plt.ylabel('Real')
-            plt.tight_layout()
-            plt.savefig(self.output_dir / f'confusion_matrix_{model_name}.png')
-    
-    def save_best_model(self, results):
-        """Guarda el mejor modelo basado en F1-Score."""
-        best_model_name = max(results.keys(), key=lambda k: results[k]['f1'])
-        best_model = self.best_models[best_model_name]
+        # Calcular y mostrar métricas detalladas
+        self._print_detailed_metrics(name, grid_search, y_pred, train_time, inference_time)
         
         # Guardar modelo
-        joblib.dump(best_model, self.output_dir / f'best_model.pkl')
+        self._save_model(name, grid_search, train_time, inference_time)
         
-        # Guardar información del modelo
+        # Actualizar mejor modelo si corresponde
+        if grid_search.best_score_ > self.best_score:
+            self.best_score = grid_search.best_score_
+            self.best_model = grid_search.best_estimator_
+            self.best_model_name = name
+    
+    def _print_detailed_metrics(self, name, grid_search, y_pred, train_time, inference_time):
+        """Imprime métricas detalladas del modelo."""
+        logger.info(f"\nResultados detallados para {name}:")
+        logger.info(f"Mejores parámetros: {grid_search.best_params_}")
+        logger.info(f"F1-Score: {grid_search.best_score_:.4f}")
+        logger.info(f"Tiempo de entrenamiento: {train_time:.2f} segundos")
+        logger.info(f"Tiempo promedio de inferencia: {inference_time*1000:.2f} ms")
+        
+        logger.info("\nMatriz de confusión:")
+        conf_matrix = confusion_matrix(self.y_test, y_pred)
+        logger.info(f"\n{conf_matrix}")
+        
+        logger.info("\nReporte de clasificación:")
+        logger.info(classification_report(self.y_test, y_pred, target_names=self.classes))
+    
+    def _save_model(self, name, grid_search, train_time, inference_time):
+        """Guarda el modelo y sus métricas."""
         model_info = {
-            'model_type': best_model_name,
-            'parameters': results[best_model_name]['best_params'],
-            'metrics': {
-                'accuracy': results[best_model_name]['accuracy'],
-                'precision': results[best_model_name]['precision'],
-                'recall': results[best_model_name]['recall'],
-                'f1': results[best_model_name]['f1']
-            },
-            'feature_names': list(self.X_train.columns),
-            'activity_mapping': self.activity_mapping,
-            'training_date': datetime.now().isoformat()
+            'model': grid_search.best_estimator_,
+            'params': grid_search.best_params_,
+            'score': grid_search.best_score_,
+            'train_time': train_time,
+            'inference_time': inference_time,
+            'classes': self.classes
         }
         
-        with open(self.output_dir / 'model_info.json', 'w') as f:
-            json.dump(model_info, f, indent=2)
-        
-        print(f"\nMejor modelo ({best_model_name}) guardado en {self.output_dir}")
-        return best_model_name, best_model
+        model_path = self.models_dir / f"{name}_model.joblib"
+        joblib.dump(model_info, model_path)
+        logger.info(f"Modelo guardado en: {model_path}")
     
-    def train(self):
-        """Ejecuta el pipeline completo de entrenamiento."""
-        # Entrenar y evaluar modelos
-        results = self.train_and_evaluate()
-        
-        # Generar visualizaciones
-        self.plot_results(results)
-        
-        # Guardar mejor modelo
-        best_model_name, best_model = self.save_best_model(results)
-        
-        return best_model_name, best_model, results
+    def save_best_model(self):
+        """Guarda el mejor modelo y metadatos importantes."""
+        if self.best_model is not None:
+            model_info = {
+                'model': self.best_model,
+                'classes': self.classes,
+                'performance': self.best_score
+            }
+            
+            best_model_path = self.models_dir / "best_model.joblib"
+            joblib.dump(model_info, best_model_path)
+            logger.info(f"\nMejor modelo guardado en: {best_model_path}")
+        else:
+            logger.warning("No hay mejor modelo para guardar")
+
+def train_and_evaluate():
+    """Función principal para entrenar y evaluar modelos."""
+    data_path = "datos_procesados/data_processed.npz"
+    models_dir = "modelos_entrenados"
+    
+    trainer = ActionClassifierTrainer(data_path, models_dir)
+    
+    try:
+        trainer.load_data()
+        trainer.train_models()
+        trainer.save_best_model()
+    except Exception as e:
+        logger.error(f"Error en el proceso de entrenamiento: {str(e)}")
+        raise
 
 if __name__ == "__main__":
-    trainer = PostureModelTrainer()
-    best_model_name, best_model, results = trainer.train()
-    
-    # Mostrar reporte final
-    print("\nReporte Final:")
-    print(f"Mejor modelo: {best_model_name}")
-    print(f"Métricas del mejor modelo:")
-    for metric, value in results[best_model_name].items():
-        if metric not in ['confusion_matrix', 'best_params']:
-            print(f"{metric}: {value:.4f}")
+    train_and_evaluate()
